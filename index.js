@@ -6,7 +6,7 @@ const { getEncoding } = require("js-tiktoken");
 const fs = require('fs');
 const path = require('path');
 
-const port = 8988;
+const port = 8001;
 
 const GPT35TURBO = 'gpt-3.5-turbo';
 const GPT4TURBO = 'gpt-4-turbo-preview';
