@@ -173,6 +173,18 @@
             }, 'slow');
         }
 
+        // when page has loaded check if "subject" parameter is present in the URL
+        // if it is, add a message to the chat
+        $(document).ready(function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const subject = urlParams.get("subject");
+            if (subject) {
+                // put subject in the message box then send it
+                userInput.val(subject);
+                sendMessage();
+            }
+        });
+
         // setTimeout(() => {
         //     addMessage("assistant", "Hello! How can I help you today?");
         //     addMessage("user", "Hello! How can I help you today?");
