@@ -1,18 +1,177 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Free Palestine</title>
-<style>
-    body {
-        background: url('https://salaamedia.com/wp-content/uploads/2023/12/watermelon-palestine.jpeg') no-repeat center center;
-        background-size: cover;
-        height: 100vh;
-        margin: 0;
-    }
-</style>
+    <title>Chat Interface</title>
+    <style>
+        /* Add your own CSS styles here to make the chat interface look nice */
+        body {
+            background-color: #121212;
+        }
+        #chat-container {
+            width: 100%;
+            margin: 0 auto;
+            padding-bottom: 80px;
+            color: white;
+        }
+        #message-list {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+        }
+        .message {
+            margin: 10px auto;
+            padding: 15px; /* Increased padding for better text readability */
+            border-radius: 10px;
+            width: 80%;
+            white-space: pre-wrap;
+            font-size: 18px; /* Increased font size for better readability */
+            line-height: 1.5; /* Adjusted line-height for improved text layout */
+        }
+        .user-message {
+            background-color: #3498db;
+            color: #ffffff; /* Change color to pure white for better legibility */
+            text-align: right;
+        }
+        .assistant-message {
+            background-color: #2ecc71;
+            color: black; /* Change color to pure white for better legibility */
+            text-align: left;
+        }
+        #user-input {
+            padding: 10px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            width: calc(100% - 110px);
+            height: 60px;
+            font-size: 16px;
+            box-sizing: border-box;
+            background-color: #1a1a1a;
+            color: #ccc;
+        }
+        #user-input::placeholder {
+            color: #aaa;
+        }
+        #send-button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            margin-right: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #send-button:hover {
+            background-color: #2980b9;
+        }
+        @media (max-width: 768px) {
+            #user-input, #send-button {
+                width: auto;
+            }
+        }
+        #user-input:focus, #send-button:focus {
+            outline: 2px solid #3498db;
+        }
+        #input-container {
+            display: flex;
+            justify-content: space-between;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #1a1a1a;
+            padding: 10px;
+            padding-right: 10px;
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+            color: white;
+        }
+        @media (max-width: 768px) {
+            #input-container {
+                flex-direction: column;
+            }
+            #user-input, #send-button {
+                width: auto;
+                margin: 5px 0;
+            }
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
+    <div id="chat-container">
+        <ul id="message-list">
+            <!-- Messages will be appended here -->
+        </ul>
+    </div>
+    <div id="input-container">
+        <textarea id="user-input" placeholder="Type a message..."></textarea>
+        <button id="send-button">Send</button>
+    </div>
+
+    <script>
+        const messageList = $("#message-list");
+        const userInput = $("#user-input");
+        const sendButton = $("#send-button");
+        var messages = [];
+
+        sendButton.click(sendMessage);
+        userInput.keypress(function (event) {
+            if (event.keyCode === 13 && !event.shiftKey) {
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            const userMessage = userInput.val();
+            if (userMessage.trim() === "") return;
+
+            addMessage("user", userMessage);
+            userInput.prop("disabled", true);
+
+            const requestData = JSON.stringify(messages);
+            $.ajax({
+                type: "POST",
+                url: "/chat",
+                contentType: "application/json",
+                data: requestData,
+                success: function (response) {
+                    addMessage("assistant", response.message);
+                    userInput.val("");
+                    userInput.prop("disabled", false);
+                    userInput.focus();
+                    scrollToBottom(); // Added call to scrollToBottom function after message addition
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error sending message:", status);
+                }
+            });
+        }
+
+        function addMessage(role, content) {
+            let display_role = "You";
+            if (role === "assistant") {
+                display_role = "Peace Evangelist";
+            }
+            const message = $("<li></li>").addClass("message").addClass(role + "-message").html(`${display_role}:\n${content}`);
+            messageList.append(message);
+            messages.push({"role": role, "content": content});
+            scrollToBottom(); // Ensure page scrolls down every time a message is added.
+        }
+
+        // Define the scrollToBottom function
+        function scrollToBottom() {
+            $('html, body').animate({
+                scrollTop: $(document).height()
+            }, 'slow');
+        }
+
+        setTimeout(() => {
+            addMessage("assistant", "Hello! How can I help you today?");
+            addMessage("user", "Hello! How can I help you today?");
+            // Removed additional calls to scrollToBottom as they are now invoked inside addMessage
+        }, 1000);
+    </script>
 </body>
 </html>
