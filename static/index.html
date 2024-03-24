@@ -11,7 +11,7 @@
         #chat-container {
             width: 100%;
             margin: 0 auto;
-            padding-bottom: 80px;
+            padding-bottom: 100px; /* Increased from 80px to 100px for additional space */
             color: white;
             max-width: 600px; /* Added max-width for better mobile experience */
         }
@@ -191,11 +191,27 @@
             }
         });
 
-        // setTimeout(() => {
-        //     addMessage("assistant", "Hello! How can I help you today?");
-        //     addMessage("user", "Hello! How can I help you today?");
-        //     // Removed additional calls to scrollToBottom as they are now invoked inside addMessage
-        // }, 1000);
+        // Adjust padding of chat container when the input box is focused or blurred
+        $('#user-input').focus(function() {
+            adjustChatContainerPadding(true);
+        }).blur(function() {
+            adjustChatContainerPadding(false);
+        });
+
+        function adjustChatContainerPadding(isFocused) {
+            if (isFocused) {
+                // Assume keyboard is visible on focus; increase padding
+                $('#chat-container').css('padding-bottom', '300px');
+            } else {
+                // Assume keyboard is hidden on blur; revert padding
+                // Adjust value based on initial media query settings
+                if (window.innerWidth <= 600) {
+                    $('#chat-container').css('padding-bottom', '150px');
+                } else {
+                    $('#chat-container').css('padding-bottom', '100px');
+                }
+            }
+        }
     </script>
 </body>
 </html>
