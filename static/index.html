@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Peace In Israel/Palestine</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         /* Add your own CSS styles here to make the chat interface look nice */
         body {
@@ -12,17 +13,18 @@
             margin: 0 auto;
             padding-bottom: 80px;
             color: white;
+            max-width: 600px; /* Added max-width for better mobile experience */
         }
         #message-list {
             list-style: none;
-            padding: 0;
+            padding: 0 5%; /* Updated padding for better mobile experience */
             width: 100%;
         }
         .message {
             margin: 10px auto;
             padding: 15px; /* Increased padding for better text readability */
             border-radius: 10px;
-            width: 80%;
+            width: 90%; /* Updated width for better mobile experience */
             white-space: pre-wrap;
             font-size: 18px; /* Increased font size for better readability */
             line-height: 1.5; /* Adjusted line-height for improved text layout */
@@ -66,9 +68,12 @@
         #send-button:hover {
             background-color: #2980b9;
         }
-        @media (max-width: 768px) {
+        @media (max-width: 600px) {
+            .message {
+                font-size: 16px;
+            }
             #user-input, #send-button {
-                width: auto;
+                font-size: 14px;
             }
         }
         #user-input:focus, #send-button:focus {
@@ -90,6 +95,7 @@
         @media (max-width: 768px) {
             #input-container {
                 flex-direction: column;
+                padding: 5px; /* Adjusted padding for better mobile experience */
             }
             #user-input, #send-button {
                 width: auto;
