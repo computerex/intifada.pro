@@ -101,6 +101,11 @@
 </head>
 <body>
     <div id="chat-container">
+        <div id="welcome-message" style="text-align: center; margin-top: 50vh; transform: translateY(-50%); color: white; font-size: 20px;">
+            This chat experience is designed to create nuance, challenge propaganda and false narratives. 
+            Our goal is to create productive dialogue, so that ultimately we can foster peace for Palestine and Israel.
+            Our "Peace Evangelist" will challenge you to think critically and empathetically.
+        </div>
         <ul id="message-list">
             <!-- Messages will be appended here -->
         </ul>
@@ -150,6 +155,7 @@
         }
 
         function addMessage(role, content) {
+            $("#welcome-message").hide(); // Hide welcome message on message add
             let display_role = "You";
             if (role === "assistant") {
                 display_role = "Peace Evangelist";
