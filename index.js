@@ -35,7 +35,7 @@ function create_message(role, content) {
     };
 }
 
-async function llm(messages, max_tokens=300, temperature=0.7, model='gpt-3.5-turbo') {
+async function llm(messages, max_tokens=500, temperature=0.7, model='gpt-3.5-turbo') {
     try {
         const response = await axios.post(
         'https://api.openai.com/v1/chat/completions',
