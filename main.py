@@ -105,7 +105,7 @@ def chat_message():
         logging.info({k: scores[k] for k in top_answers})
 
         response = f"""I am a pro-palistinian debating a zionist. Create a comprehensive, detailed response to this question using the information below. 
-        Use all the specific key points and information to create the response. But do not refer the information itself, directly! Make the answer self-contained and ready to post.
+        Use all the specific key points and information to create the response. But do not refer the information itself! Maintain the 3rd wall. Make the answer self-contained and ready to post.
         Use lists and bullet points whenever possible as they are easier to read.
 
         Question: '{query}':\n\n"""
