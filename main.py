@@ -153,7 +153,7 @@ def main():
     
     answers_embeddings_global = answer_embeddings
     from waitress import serve
-    serve(app, host="0.0.0.0", port=4001)
+    serve(app, host="0.0.0.0", port=8001)
 
 if __name__ == "__main__":
     main()
