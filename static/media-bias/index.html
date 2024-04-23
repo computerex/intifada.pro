@@ -522,6 +522,8 @@
                 const reader = new FileReader();
                 reader.onload = function (e) {
                     const data = JSON.parse(e.target.result);
+                    // save to local storage
+                    localStorage.setItem('articles', JSON.stringify(data.articles));
                     articles = data.articles;
                     displayCriteria(data.criteria);
                     // save criteria to window object for later use
@@ -538,6 +540,19 @@
         }
 
         function load_default_file() {
+            // check if articles are already saved in local storage
+            const savedArticles = localStorage.getItem('articles');
+            if (savedArticles) {
+                articles = JSON.parse(savedArticles);
+                displayCriteria(window.criteria);
+                if (articles.length > 0) {
+                    displayArticle(articles[0]);
+                }
+                populateSidebar(articles);
+                // Reset Aggregated Metrics upon loading new articles
+                updateAggregatedMetrics(articles);
+                return;
+            }
             const pre_signed_url_get_url = '/articles';
             // call api to get pre-signed url to articles.json
             fetch(pre_signed_url_get_url)
@@ -558,6 +573,9 @@
                             populateSidebar(articles);
                             // Reset Aggregated Metrics upon loading new articles
                             updateAggregatedMetrics(articles);
+
+                            // Save articles to local storage
+                            localStorage.setItem('articles', JSON.stringify(articles));
                         });
                 });
         }
@@ -766,7 +784,7 @@
             metricTermsMap["IsraelOnly-BD"] = ["Israel"];
             metricTermsMap["PalestineOnly-HD"] = ["Palestine"];
             metricTermsMap["PalestineOnly-BD"] = ["Palestine"];
-            
+
             const termsToHighlight = metricTermsMap[metricKey];
 
             // Verify terms are defined for highlighting to continue
