@@ -87,6 +87,10 @@ def load_handala_answers():
 def index():
     return app.send_static_file('index.html')
 
+@app.route('/media-bias', methods=['GET'])
+def media_bias_index():
+    return app.send_static_file('media-bias/index.html')
+
 @app.route('/chat', methods=['POST'])
 def chat_message():
     req_data = request.get_json()

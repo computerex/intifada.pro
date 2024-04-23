@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Articles Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 20px;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 24px;
+        }
+
+        .upload-area {
+            border: 2px dashed #ddd;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .input-file {
+            display: none;
+        }
+
+        .button {
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .button:disabled {
+            background-color: #ccc;
+        }
+
+        .article {
+            margin-top: 20px;
+            padding: 15px;
+            border-left: 3px solid #007bff;
+        }
+
+        .sidebar {
+            width: 20%;
+            float: left;
+            height: 100vh;
+            overflow: auto;
+            border-right: 2px solid #ddd;
+            padding: 20px;
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .upload-area {
+            flex-basis: 100%;
+        }
+
+        #articleArea {
+            flex-grow: 1;
+            padding-left: 20px;
+            width: 70%;
+        }
+
+        .article-title:hover {
+            cursor: pointer;
+            color: #007bff;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                border-right: none;
+            }
+
+            #articleArea {
+                padding-left: 0px;
+            }
+        }
+
+        footer {
+            flex-basis: 100%;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* New CSS styles for Filter Query Visualization */
+        .filter-container {
+            padding: 10px;
+            margin-top: 20px;
+            background-color: #eef;
+            border-radius: 5px;
+        }
+
+        .filter-label {
+            font-weight: bold;
+        }
+
+        .included {
+            color: green;
+        }
+
+        .excluded {
+            color: red;
+        }
+
+        .query-section {
+            margin-top: 10px;
+        }
+
+        .query-key {
+            font-weight: bold;
+        }
+
+        /* New CSS styles for Article Metrics */
+        #resultsTable {
+            width: 100%;
+            text-align: left;
+            border-collapse: collapse;
+        }
+
+        #resultsTable th {
+            font-weight: bold;
+        }
+
+        #resultsTable td,
+        #resultsTable th {
+            padding: 5px;
+            border: 1px solid #ddd;
+        }
+
+        /* New CSS styles for Aggregated Metrics */
+        #aggregatedResultsTable {
+            width: 100%;
+            text-align: left;
+            border-collapse: collapse;
+        }
+
+        #aggregatedResultsTable th {
+            font-weight: bold;
+        }
+
+        #aggregatedResultsTable td,
+        #aggregatedResultsTable th {
+            padding: 5px;
+            border: 1px solid #ddd;
+        }
+
+        /* New CSS styles for Fuzzy Search */
+        #searchInput {
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 20px;
+            width: calc(100% - 2px);
+        }
+
+        /* New CSS styles for Term Highlighting */
+        .highlight {
+            background-color: yellow;
+        }
+
+        /* Additional CSS styles for clickable metrics */
+        #resultsTable tr:hover,
+        #aggregatedResultsTable tr:hover {
+            cursor: pointer;
+            background-color: #f0f0f0;
+        }
+
+
+        /* New CSS styles for article body formatting */
+        .article p {
+            font-family: 'Georgia', serif;
+            /* Change font to improve readability */
+            line-height: 1.6;
+            /* Increase line spacing for better readability */
+            text-align: justify;
+            /* Justify text to make it look neat */
+            margin-bottom: 20px;
+            /* Add some space between paragraphs */
+        }
+
+        /* New CSS styles for date filters */
+        .date-filter {
+            margin-bottom: 15px;
+        }
+
+        .date-filter label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .date-filter input[type="datetime-local"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            /* Makes the input fit well */
+        }
+
+        .no-articles {
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* New CSS styles for metrics area */
+        #metricsArea {
+            display: flex;
+            justify-content: space-between;
+            /* Adjusted to space-between for better spacing */
+        }
+
+        .metrics-table {
+            width: 48%;
+            /* Each table will take up slightly less than half the available space to fit side by side */
+        }
+
+        #exportMetricsBtn {
+            margin-left: 20px;
+            /* Remove default margin */
+        }
+
+        /* New CSS styles for selected article */
+        .selected-article {
+            background-color: #007bff;
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .selected-article:hover {
+            cursor: pointer;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="upload-area" onclick="document.getElementById('fileUpload').click();">
+            Click to Upload JSON File
+            <input accept=".json" class="input-file" id="fileUpload" onchange="loadFile(event)" type="file" />
+        </div>
+        <div id="criteriaArea"></div>
+        <div class="sidebar">
+            <input id="searchInput" oninput="filterArticles()" placeholder="Search Articles..."
+                style="padding: 10px; width: calc(100% - 20px); margin-bottom: 10px;" type="text" />
+            <div class="date-filter">
+                <label for="beginDate">Begin Date:</label>
+                <input type="datetime-local" id="beginDate" name="beginDate">
+            </div>
+            <div class="date-filter">
+                <label for="endDate">End Date:</label>
+                <input type="datetime-local" id="endDate" name="endDate">
+            </div>
+            <!-- New Code Block for News Desk Dropdown -->
+            <div class="date-filter">
+                <label for="newsDesk">News Desk:</label>
+                <select id="newsDesk" name="newsDesk"></select>
+            </div>
+            <button id="dateFilterBtn" class="button">Filter</button>
+            <!-- Add Export Metrics Button HTML after the Filter Button -->
+            <button id="exportMetricsBtn" class="button" onclick="exportMetricsToCSV()">Export Metrics</button>
+        </div>
+        <div id="articleArea"></div>
+        <footer>© 2024 Media Bias Project | Tech 4 Palestine | Version v1.3</footer>
+    </div>
+    <script>
+        let articles = [];
+        let currentArticleIndex = 0;
+        let isHighlightRemoveListenerInitialized = false; // Global flag
+        let articleIndexMapping = {}; // Global mapping object
+
+        function formatDate(dateStr) {
+            const [year, month, day] = dateStr.split('_');
+            const date = new Date(year, month - 1, day);
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        function parseQueryStringEnhanced(query) {
+            const trimExtras = (str) => str.replace(/^[:("]+|[:")]+$/g, '');
+            let andSections = query.split(/ AND (?![^()]*\))/);
+            let parsedQuery = {};
+
+            andSections.forEach(section => {
+                if (section.includes(' OR ')) {
+                    let orParts = section.split(/ OR (?![^()]*\))/).map(trimExtras);
+                    orParts.forEach(part => {
+                        let [field, values] = part.split(':');
+                        values = values.substring(1, values.length - 1).split('", "').map(trimExtras);
+
+                        if (!parsedQuery.OR) parsedQuery.OR = [];
+                        parsedQuery.OR.push({ [field]: values });
+                    });
+                } else {
+                    let [field, values] = section.split(/:(.+)/);
+                    values = values.substring(1, values.length - 1).split('", "').map(trimExtras);
+                    parsedQuery[field] = values;
+                }
+            });
+
+            return parsedQuery;
+        }
+
+        function displayCriteria(criteria) {
+            let parsedQuery = parseQueryStringEnhanced(criteria.filter_query);
+
+            const criteriaArea = document.getElementById('criteriaArea');
+            criteriaArea.innerHTML =
+                `<strong>Run ID:</strong> ${criteria.run_id}<br>` +
+                `<strong>Time Frame:</strong> ${formatDate(criteria.begin_date)} to ${formatDate(criteria.end_date)}<br>` +
+                `<strong>Total Articles:</strong> ${criteria.total_articles}<br>`;
+
+            let filterContainer = `<div class="filter-container">`;
+            filterContainer += `<div class="filter-label">Filter Query Visualization:</div>`;
+
+            for (const key in parsedQuery) {
+                if (Array.isArray(parsedQuery[key]) && key !== 'OR' && key[0] !== '-') {
+                    filterContainer += `<div class="query-section"><span class="query-key">${key}:</span> <span class="included">${JSON.stringify(parsedQuery[key])}</span></div>`;
+                }
+            }
+
+            if (parsedQuery.OR) {
+                let orSectionsHTML = `<div class="query-section"><span class="query-key">OR:</span>`;
+                parsedQuery.OR.forEach(orSection => {
+                    Object.entries(orSection).forEach(([key, values]) => {
+                        orSectionsHTML += `<div><span class="query-key">${key}:</span> <span class="included">${values.join(', ')}</span></div>`;
+                    });
+                });
+                orSectionsHTML += `</div>`;
+                filterContainer += orSectionsHTML;
+            }
+
+            if (parsedQuery['-headline']) {
+                filterContainer += `<div class="query-section"><span class="query-key">Excludes Headline:</span> <span class="excluded">${parsedQuery['-headline'].join(', ')}</span></div>`;
+            }
+            if (parsedQuery['-body']) {
+                filterContainer += `<div class="query-section"><span class="query-key">Excludes Body:</span> <span class="excluded">${parsedQuery['-body'].join(', ')}</span></div>`;
+            }
+
+            filterContainer += `</div>`;
+
+            criteriaArea.innerHTML += filterContainer;
+        }
+
+        function render_aggregated_metrics_table(aggregatedMetrics) {
+            if (!aggregatedMetrics) {
+                return;
+            }
+            // Update the Aggregated Metrics Table with the aggregated metrics
+            const aggregatedResultsTable = document.getElementById('aggregatedResultsTable');
+            Object.keys(aggregatedMetrics).forEach(metric => {
+                const rows = aggregatedResultsTable.querySelectorAll('tr');
+                rows.forEach(row => {
+                    if (row.firstChild.textContent === metric) {
+                        row.lastChild.textContent = aggregatedMetrics[metric];
+                    }
+                });
+            });
+        }
+
+        function displayArticle(article) {
+            const articleArea = document.getElementById('articleArea');
+            const headline = replaceQuotes(article.headline);
+            const body = replaceQuotes(article.scraped_article_body || '');
+            const metrics = countMetrics(headline, body);
+
+            let metricsHTML = '<div id="metricsArea">';
+
+            // Existing Article Metrics table construction with added class for styling
+            metricsHTML += '<div class="metrics-table"><h2>Article Metrics</h2><table id="resultsTable">' +
+                '<tr><th>Metric</th><th>Occurrences</th></tr>';
+            Object.keys(metrics).forEach(metric => {
+                metricsHTML += `<tr><td>${metric}</td><td>${metrics[metric]}</td></tr>`;
+            });
+            metricsHTML += '</table></div>'; // Close Metrics table
+
+            // Aggregated Metrics table construction with zeroed out values
+            metricsHTML += '<div class="metrics-table"><h2>Aggregated Metrics</h2><table id="aggregatedResultsTable">' +
+                '<tr><th>Metric</th><th>Occurrences</th></tr>';
+            Object.keys(metrics).forEach(metric => {
+                metricsHTML += `<tr><td>${metric}</td><td>0</td></tr>`; // Zero out the values as specified
+            });
+            metricsHTML += '</table></div>'; // Close Aggregated Metrics table
+
+            metricsHTML += '</div>'; // Close #metricsArea
+
+            articleArea.innerHTML =
+                `${metricsHTML}` +
+                `<div class="article">` +
+                `<h2>${headline}</h2>` +
+                `<p><strong>Published:</strong> ${article.pub_date}</p>` +
+                `<p><strong>News Desk:</strong> ${article['news-desk']}</p>` +
+                `<p id="abstract"><strong>Abstract:</strong> ${article.abstract}</p>` +
+                `<p><strong>Body:</strong> ${body}</p>` +
+                `<a href="${article.web_url}" target="_blank">Read more</a></div>`;
+
+            // Add event listener after the innerHTML is set
+            document.getElementById('metricsArea').addEventListener('click', function (e) {
+                if (e.target && e.target.matches("#resultsTable td")) {
+                    const metricKey = e.target.parentNode.firstChild.innerText; // Get metric key from the first cell of the clicked row
+                    highlightTerms(metricKey, articles[currentArticleIndex]);
+                }
+                if (e.target && e.target.matches("#aggregatedResultsTable td")) {
+                    const metricKey = e.target.parentNode.firstChild.innerText; // Get metric key from the first cell of the clicked row
+                    filterArticlesByDate(metricKey);
+                }
+            });
+
+            // Initialize removeHighlights click event listener if it hasn't been initialized yet
+            if (!isHighlightRemoveListenerInitialized) {
+                document.addEventListener('click', function (e) {
+                    const isClickInsideMetricsTable = e.target.closest('#resultsTable');
+                    if (!isClickInsideMetricsTable) {
+                        removeHighlights();
+                    }
+                });
+                isHighlightRemoveListenerInitialized = true; // Set flag to true after initialization
+            }
+
+            // Update the Aggregated Metrics Table with the aggregated metrics
+            render_aggregated_metrics_table(window.aggregatedMetrics);
+        }
+
+        function populateSidebar(filteredArticles) {
+            if (!filteredArticles) {
+                filteredArticles = [];
+            }
+
+            const sidebar = document.getElementsByClassName('sidebar')[0];
+            sidebar.innerHTML =
+                '<input type="text" id="searchInput" placeholder="Search Articles..." oninput="filterArticles()" style="padding: 10px; width: calc(100% - 20px); margin-bottom: 10px;">' +
+                '<div class="date-filter"><label for="beginDate">Begin Date:</label><input type="datetime-local" id="beginDate" name="beginDate"></div>' +
+                '<div class="date-filter"><label for="endDate">End Date:</label><input type="datetime-local" id="endDate" name="endDate"></div>' +
+                '<div class="date-filter"><label for="newsDesk">News Desk:</label><select id="newsDesk" name="newsDesk"></select></div>' +
+                '<button id="dateFilterBtn" class="button">Filter</button>' +
+                '<!-- Add Export Metrics Button HTML after the Filter Button -->' +
+                '<button id="exportMetricsBtn" class="button" onclick="exportMetricsToCSV()">Export Metrics</button>' +
+                '<div id="articleCount" style="margin-top:10px;">Showing ' + filteredArticles.length + ' of ' + articles.length + ' articles</div>';
+
+            articleIndexMapping = {}; // Reset the mapping object
+
+            // Sort filteredArticles in ascending order by pub_date
+            filteredArticles.sort((a, b) => new Date(a.pub_date) - new Date(b.pub_date));
+
+            sidebar.innerHTML += filteredArticles.map((article, index) => {
+                const originalIndex = articles.findIndex(originalArticle => originalArticle.headline === article.headline && originalArticle.pub_date === article.pub_date);
+                articleIndexMapping[index] = originalIndex;
+                return `<p class="article-title" data-index="${index}">${article.headline}</p>`;
+            }).join('');
+
+            document.getElementById('dateFilterBtn').addEventListener('click', function () {
+                filterArticlesByDate();
+            });
+
+            document.getElementById('searchInput').oninput = function () {
+                filterArticles();
+            };
+
+            const newsDeskDropdown = document.getElementById('newsDesk');
+            const option = document.createElement('option');
+            option.value = '1';
+            option.textContent = '1- All except Corrections/OpEd/Letters (default)';
+            newsDeskDropdown.appendChild(option);
+
+            const option2 = document.createElement('option');
+            option2.value = '2';
+            option2.textContent = '2- Corrections';
+            newsDeskDropdown.appendChild(option2);
+
+            const option3 = document.createElement('option');
+            option3.value = '3';
+            option3.textContent = '3- OpEd';
+            newsDeskDropdown.appendChild(option3);
+
+            const option4 = document.createElement('option');
+            option4.value = '4';
+            option4.textContent = '4- Letters';
+            newsDeskDropdown.appendChild(option4);
+
+            // Add event listeners to article titles for highlighting
+            document.querySelectorAll('.article-title').forEach(title => {
+                title.addEventListener('click', function () {
+                    const filteredArticleIndex = title.getAttribute('data-index');
+                    const originalArticleIndex = articleIndexMapping[filteredArticleIndex];
+                    displayArticle(articles[originalArticleIndex]);
+
+                    // Remove highlight from all titles
+                    document.querySelectorAll('.article-title').forEach(title => {
+                        title.classList.remove('selected-article');
+                    });
+
+                    // Highlight the clicked title
+                    title.classList.add('selected-article');
+                });
+            });
+        }
+
+        function loadFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const data = JSON.parse(e.target.result);
+                    articles = data.articles;
+                    displayCriteria(data.criteria);
+                    // save criteria to window object for later use
+                    window.criteria = data.criteria;
+                    if (articles.length > 0) {
+                        displayArticle(articles[0]);
+                    }
+                    populateSidebar(articles);
+                    // Reset Aggregated Metrics upon loading new articles
+                    updateAggregatedMetrics(articles);
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function load_default_file() {
+            // fetch with no-cors
+            const url = 'https://orbiter-mods.com/files/articles.json';
+            fetch(url, {
+                mode: 'no-cors'
+            }).then(response => response.json())
+                .then(data => {
+                    articles = data.articles;
+                    displayCriteria(data.criteria);
+                    // save criteria to window object for later use
+                    window.criteria = data.criteria;
+                    if (articles.length > 0) {
+                        displayArticle(articles[0]);
+                    }
+                    populateSidebar(articles);
+                    // Reset Aggregated Metrics upon loading new articles
+                    updateAggregatedMetrics(articles);
+                }).catch(error => {
+                    console.log(error);
+                });
+        }
+
+        document.getElementsByClassName('sidebar')[0].addEventListener('click', function (e) {
+            if (e.target && e.target.matches(".article-title")) {
+                const filteredArticleIndex = e.target.getAttribute('data-index');
+                const originalArticleIndex = articleIndexMapping[filteredArticleIndex];
+                displayArticle(articles[originalArticleIndex]);
+
+                // Remove highlight from all titles
+                document.querySelectorAll('.article-title').forEach(title => {
+                    title.classList.remove('selected-article');
+                });
+
+                // Highlight the clicked title
+                e.target.classList.add('selected-article');
+            }
+        });
+
+        function replaceQuotes(text) {
+            text = text.replace(/&quot;/g, '"');
+            const QUOTE_PATTERN = /["'](.*?)["']/g;
+            const QUOTE_PLACEHOLDER = "[QUOTE]";
+            return text.replace(QUOTE_PATTERN, QUOTE_PLACEHOLDER);
+        }
+
+        function get_null_metrics() {
+            let aggregatedMetrics = {
+                "Islam-HD": 0, "Islam-BD": 0,
+                "Semite-HD": 0, "Semite-BD": 0,
+                "Israel-HD": 0, "Israel-BD": 0,
+                "IsraelOnly-HD": 0, "IsraelOnly-BD": 0,
+                "PalestineOnly-HD": 0, "PalestineOnly-BD": 0,
+                "Palestine-HD": 0, "Palestine-BD": 0,
+                "OT-HD": 0, "OT-BD": 0,
+                "Al-Shati-HD": 0, "Al-Shati-BD": 0, "Al-Shati-RC": 0,
+                "Bureij-HD": 0, "Bureij-BD": 0, "Bureij-RC": 0,
+                "Deir-al-Balah-HD": 0, "Deir-al-Balah-BD": 0, "Deir-al-Balah-RC": 0,
+                "Jabalia-HD": 0, "Jabalia-BD": 0, "Jabalia-RC": 0,
+                "Khan-Yunis-HD": 0, "Khan-Yunis-BD": 0, "Khan-Yunis-RC": 0,
+                "Maghazi-HD": 0, "Maghazi-BD": 0, "Maghazi-RC": 0,
+                "Nuseirat-HD": 0, "Nuseirat-BD": 0, "Nuseirat-RC": 0,
+                "Rafah-HD": 0, "Rafah-BD": 0, "Rafah-RC": 0,
+            };
+            return aggregatedMetrics;
+        }
+
+        function get_metric_terms() {
+            const terms = {
+                "Islam": ["Islamophobia", "Islamophobic", "Islamophobe", "anti-Muslim"],
+                "Semite": ["antisemitism", "antisemitic", "anti-semitism", "anti-semitic", "antisemite", "anti-semite"],
+                "Israel": ["Israel", "Israeli", "Israelis"],
+                "Palestine": ["Palestine", "Palestinian", "Palestinians", "Gaza", "Gazan", "Gazans", "West Bank"],
+                "OT": ["Occupied Territories", "Occupied West Bank"],
+                "Al-Shati": ["Al-Shati", "Al Shati", "El Shati", "El-Shati"],
+                "Bureij": ["Bureij", "Boureij"],
+                "Deir-al-Balah": ["Deir-al-Balah", "Deir al-Balah", "Deir al Balah", "Dair al-Balah"],
+                "Jabalia": ["Jabalia", "Jabaliya", "Jabalya"],
+                "Khan-Yunis": ["Khan Yunis", "Khan Yunes", "Khan Younes", "Khan Younis", "Khan Yunus"],
+                "Maghazi": ["Maghazi", "Magasi"],
+                "Nuseirat": ["Nuseirat", "Nusseirat", "Nouseirat"],
+                "Rafah": ["Rafah"],
+            };
+            return terms;
+        }
+
+        /**
+         * This function measures instances where camp is preceded or followed by the words "Refugee camp"
+         *
+         * @param {string} text - The text in which to search for the term.
+         * @param {string} camp - The camp name to search for.
+         * @returns {number} - The number of occurrences of the camp name preceded or followed by "Refugee camp".
+         */
+        function count_refugee_camp_metric(text, camp) {
+            const pattern = new RegExp(`(Refugee camp\\s+${camp}|${camp}\\s+Refugee camp)`, 'gi');
+            return (text.match(pattern) || []).length;
+        }
+
+        function get_refugee_camps() {
+            const refugeeCamps = ["Al-Shati", "Bureij", "Deir-al-Balah", "Jabalia", "Khan-Yunis", "Maghazi", "Nuseirat", "Rafah"];
+            return refugeeCamps;
+        }
+
+        function countMetrics(headline, articleBody) {
+            const terms = get_metric_terms();
+
+            let metrics = get_null_metrics();
+            const refugeeCamps = get_refugee_camps();
+
+            for (let term in terms) {
+                metrics[`${term}-HD`] += countOccurrences(terms[term], headline);
+                metrics[`${term}-BD`] += countOccurrences(terms[term], articleBody);
+
+                if (refugeeCamps.includes(term)) {
+                    metrics[`${term}-RC`] += count_refugee_camp_metric(headline, term) + count_refugee_camp_metric(articleBody, term);
+                }
+            }
+
+            const israelWords = ["Israeli", "Israelis"];
+            metrics["IsraelOnly-HD"] = countOccurrences(["Israel"], headline);
+            metrics["IsraelOnly-BD"] = countOccurrences(["Israel"], articleBody);
+
+            metrics["PalestineOnly-HD"] = countOccurrences(["Palestine"], headline);
+            metrics["PalestineOnly-BD"] = countOccurrences(["Palestine"], articleBody);
+            return metrics;
+        }
+
+        function countOccurrences(words, text) {
+            return words.reduce((total, word) => {
+                const pattern = new RegExp(`\\b${word}\\b`, 'gi'); // Regex to match whole words case-insensitively
+                return total + (text.match(pattern) || []).length;
+            }, 0);
+        }
+
+        function filterArticles() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toUpperCase();
+            const titles = document.getElementsByClassName('article-title');
+
+            for (let i = 0; i < titles.length; i++) {
+                let title = titles[i];
+                txtValue = title.textContent || title.innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    title.style.display = "";
+                } else {
+                    title.style.display = "none";
+                }
+            }
+        }
+
+        function filterArticlesByDate(filter_aggregate_metric_key = null) {
+            let beginDateInput = document.getElementById('beginDate');
+            let endDateInput = document.getElementById('endDate');
+            let newsDeskInput = document.getElementById('newsDesk');
+
+            const beginDateVal = beginDateInput.value;
+            const endDateVal = endDateInput.value;
+            const newsDeskVal = newsDeskInput.value; // Retrieve the selected news desk value
+
+            const beginDate = beginDateVal ? new Date(beginDateVal) : new Date('1970-01-01');
+            const endDate = endDateVal ? new Date(endDateVal) : new Date('2999-12-31');
+
+            // Map newsDesk dropdown values to your articles' news-desk field values (this mapping might need customizing based on your articles data)
+            let newsDeskFilter = null;
+            switch (newsDeskVal) {
+                case '2': // Corrections
+                    newsDeskFilter = 'Corrections';
+                    break;
+                case '3': // OpEd
+                    newsDeskFilter = 'OpEd';
+                    break;
+                case '4': // Letters
+                    newsDeskFilter = 'Letters';
+                    break;
+            }
+
+
+            let filteredArticles = articles.filter(article => {
+                const articleDate = new Date(article.pub_date);
+                const articleNewsDesk = article['news-desk'];
+                if (newsDeskVal === '1' && ['Corrections', 'OpEd', 'Letters'].includes(articleNewsDesk)) {
+                    return false;
+                }
+                if (newsDeskFilter && articleNewsDesk !== newsDeskFilter) {
+                    return false;
+                }
+                return articleDate >= beginDate && articleDate <= endDate;
+            });
+
+            // Filter by aggregate metric key if provided
+            if (filter_aggregate_metric_key) {
+                const metricKey = filter_aggregate_metric_key;
+                filteredArticles = filteredArticles.filter(article => {
+                    const articleMetrics = countMetrics(article.headline, article.scraped_article_body || '');
+                    return articleMetrics[metricKey] > 0;
+                });
+            }
+
+            populateSidebar(filteredArticles);
+
+            // Reapply the selections.
+            document.getElementById('beginDate').value = beginDateVal;
+            document.getElementById('endDate').value = endDateVal;
+            document.getElementById('newsDesk').value = newsDeskVal;
+
+            // Update Aggregated Metrics after filtering
+            updateAggregatedMetrics(filteredArticles);
+        }
+
+        function highlightTerms(metricKey, article) {
+            removeHighlights(); // Clears previous highlights
+
+            const metricTermsMap = {}
+            const metricTerms = get_metric_terms();
+            const refugeeCamps = get_refugee_camps();
+
+            for (let term in metricTerms) {
+                metricTermsMap[`${term}-HD`] = metricTerms[term];
+                metricTermsMap[`${term}-BD`] = metricTerms[term];
+                if (refugeeCamps.includes(term)) {
+                    metricTermsMap[`${term}-RC`] = metricTerms[term];
+                }
+            }
+
+            const termsToHighlight = metricTermsMap[metricKey];
+
+            // Verify terms are defined for highlighting to continue
+            if (!termsToHighlight) return;
+
+            let targetElementsSelector = ''; // Initialize empty string
+            if (metricKey.endsWith('HD')) {
+                targetElementsSelector = 'h2'; // Target headlines for highlighting
+            } else if (metricKey.endsWith('BD')) {
+                targetElementsSelector = 'p:not(#abstract)'; // Exclude paragraph with id="abstract" when targeting body
+            } else if (metricKey.endsWith('RC')) {
+                // target headlines and the paragraphs
+                targetElementsSelector = 'h2, p:not(#abstract)';
+            }
+
+            document.querySelectorAll(`.article ${targetElementsSelector}`).forEach(elem => {
+                let html = elem.innerHTML;
+                termsToHighlight.forEach(term => {
+                    let regex = new RegExp(`\\b${term}\\b`, 'gi'); // Regex to match whole words case-insensitively
+                    if (metricKey.endsWith('RC')) {
+                        regex = new RegExp(`(Refugee camp\\s+${term}|${term}\\s+Refugee camp)`, 'gi');
+                    }
+
+                    html = html.replace(regex, '<span class="highlight">$&</span>');
+                });
+                elem.innerHTML = html;
+            });
+        }
+
+        function removeHighlights() {
+            document.querySelectorAll('.highlight').forEach(span => {
+                span.outerHTML = span.innerHTML; // Remove <span> but keep content
+            });
+        }
+
+        function updateAggregatedMetrics(filteredArticles) {
+            // Reset aggregated metrics
+            let aggregatedMetrics = get_null_metrics();
+
+            // Aggregate metrics from filtered articles
+            filteredArticles.forEach(article => {
+                const articleMetrics = countMetrics(article.headline, article.scraped_article_body || '');
+                Object.keys(aggregatedMetrics).forEach(metric => {
+                    aggregatedMetrics[metric] += articleMetrics[metric];
+                });
+            });
+            window.aggregatedMetrics = aggregatedMetrics; // Save aggregated metrics to window object for later use
+            render_aggregated_metrics_table(aggregatedMetrics);
+        }
+
+        // Add exportMetricsToCSV Function to Script
+        function exportMetricsToCSV() {
+            const fileName = 'aggregated_metrics.csv';
+            let csvContent = 'data:text/csv;charset=utf-8,';
+
+            // Header Row
+            csvContent += "Metric,Occurrences\n";
+
+            // Data Rows
+            const aggregatedResultsTable = document.getElementById('aggregatedResultsTable');
+            let rows = aggregatedResultsTable.querySelectorAll('tr');
+            rows.forEach((row, index) => {
+                if (index > 0) { // Skip header row
+                    const metric = row.childNodes[0].textContent;
+                    const occurrences = row.childNodes[1].textContent;
+                    csvContent += `${metric},${occurrences}\n`;
+                }
+            });
+
+            const runId = window.criteria.run_id;
+            const begin_date = document.getElementById('beginDate').value || window.criteria.begin_date;
+            const end_date = document.getElementById('endDate').value || window.criteria.end_date;
+
+            // Append Criteria Information to CSV
+            csvContent += `Run ID,${runId}\n`;
+            csvContent += `Begin Date,${begin_date}\n`;
+            csvContent += `End Date,${end_date}\n`;
+
+            // Create a Link and Trigger a Download
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", fileName);
+            document.body.appendChild(link); // Required for FF
+
+            link.click(); // Trigger download
+            document.body.removeChild(link); // Clean up
+        }
+
+        load_default_file();
+    </script>
+</body>
+
+</html>
