@@ -762,7 +762,11 @@
                     metricTermsMap[`${term}-RC`] = metricTerms[term];
                 }
             }
-
+            metricTermsMap["IsraelOnly-HD"] = ["Israel"];
+            metricTermsMap["IsraelOnly-BD"] = ["Israel"];
+            metricTermsMap["PalestineOnly-HD"] = ["Palestine"];
+            metricTermsMap["PalestineOnly-BD"] = ["Palestine"];
+            
             const termsToHighlight = metricTermsMap[metricKey];
 
             // Verify terms are defined for highlighting to continue
