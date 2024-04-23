@@ -5,6 +5,8 @@ import re
 import numpy as np
 import logging
 import json
+import boto3
+from botocore.client import Config
 # cosine_similarity
 from sklearn.metrics.pairwise import cosine_similarity
 from flask import Flask, request, jsonify
@@ -20,11 +22,38 @@ def count_tokens_messages(messages):
 deepinfra_key  = json.loads(open('.env.json').read())['DEEP_INFRA_API_KEY']
 openai_key = json.loads(open('.env.json').read())['OPEN_AI_API_KEY']
 
+r2_account_id = json.loads(open('.env.json').read())['r2_account_id']
+r2_access_key_id = json.loads(open('.env.json').read())['r2_access_key_id']
+r2_secret_access_key = json.loads(open('.env.json').read())['r2_secret_access_key']
+
+r2_client = boto3.client(
+    's3',
+    aws_access_key_id=r2_access_key_id,
+    aws_secret_access_key=r2_secret_access_key,
+    endpoint_url=f'https://{r2_account_id}.r2.cloudflarestorage.com',
+    config=Config(
+        s3={'addressing_style': 'path'},
+        retries=dict( max_attempts=30 ),
+        signature_version='s3v4'
+    ),
+)
+
 app = Flask(__name__)
 
 answers_embeddings_global = {}
 CHAT_SYSTEM_MESSAGE = open('prompts/system.txt', 'r', encoding='utf-8').read()
 
+def r2_get_presigned(key):
+    response = r2_client.generate_presigned_url(
+        'get_object',
+        Params={
+            'Bucket': 'orbiter-mods',
+            'Key': key,
+        },
+        ExpiresIn=3600,
+    )
+    return response
+    
 def get_llm_client(model):
     if model.startswith('gpt'):
         return OpenAI(
@@ -81,6 +110,12 @@ def load_handala_answers():
             answers[answer] = f.read()
 
     return answers
+
+# return pre-signed url for "articles.json"
+@app.route('/articles', methods=['GET'])
+def get_articles():
+    response = r2_get_presigned('articles.json')
+    return jsonify({"url": response})
 
 # serve static/index.html
 @app.route('/', methods=['GET'])

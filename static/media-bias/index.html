@@ -538,24 +538,27 @@
         }
 
         function load_default_file() {
-            // fetch with no-cors
-            const url = 'https://orbiter-mods.com/files/articles.json';
-            fetch(url, {
-                mode: 'no-cors'
-            }).then(response => response.json())
+            const pre_signed_url_get_url = '/articles';
+            // call api to get pre-signed url to articles.json
+            fetch(pre_signed_url_get_url)
+                .then(response => response.json())
                 .then(data => {
-                    articles = data.articles;
-                    displayCriteria(data.criteria);
-                    // save criteria to window object for later use
-                    window.criteria = data.criteria;
-                    if (articles.length > 0) {
-                        displayArticle(articles[0]);
-                    }
-                    populateSidebar(articles);
-                    // Reset Aggregated Metrics upon loading new articles
-                    updateAggregatedMetrics(articles);
-                }).catch(error => {
-                    console.log(error);
+                    const url = data.url;
+                    console.log('URL:', url);
+                    fetch(url)
+                        .then(response => response.json())
+                        .then(data => {
+                            articles = data.articles;
+                            displayCriteria(data.criteria);
+                            // save criteria to window object for later use
+                            window.criteria = data.criteria;
+                            if (articles.length > 0) {
+                                displayArticle(articles[0]);
+                            }
+                            populateSidebar(articles);
+                            // Reset Aggregated Metrics upon loading new articles
+                            updateAggregatedMetrics(articles);
+                        });
                 });
         }
 
